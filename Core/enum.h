@@ -16,6 +16,7 @@ namespace Game {
 			Forward,//前进
 			Back,//后退
 			Run,//奔跑
+			Attack,//攻击
 		};
 		//玩家操作种类
 		enum KeyActionType {
@@ -23,7 +24,8 @@ namespace Game {
 			MoveRight,
 			MoveUp,
 			MoveDown,
-			MoveRun//奔跑
+			MoveRun,//奔跑
+			MoveAttack,//普通攻击
 		};
 	
 	}

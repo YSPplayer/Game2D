@@ -8,6 +8,7 @@
 #include "../Resources/resources.h"
 namespace Game {
 	namespace UI {
+		class RoleCombo;
 		/// <summary>
 		/// 角色类
 		/// </summary>
@@ -15,6 +16,7 @@ namespace Game {
 		public:
 			bool CreateRole(RoleResources type);
 			void SetAction(ActionType type);
+			void SetComBo(int index);
 			/// <summary>
 			/// 设置角色的站位
 			/// </summary>
@@ -50,6 +52,14 @@ namespace Game {
 			}
 
 			/// <summary>
+			/// 获得当前普攻的最大次数
+			/// </summary>
+			/// <returns></returns>
+			inline qint32 GetComBoCount() {
+				return combo->count;
+			}
+
+			/// <summary>
 			/// 设置当前的角色速度
 			/// </summary>
 			inline void SetSpeed(qint32 speed) {
@@ -57,10 +67,14 @@ namespace Game {
 			}
 			void Move(KeyActionType type);
 			void Update();
+			RoleResources GetRoleType() {
+				return roleType;
+			}
 		private:
 			bool isleft;//当前角色的站位是否在左侧
 			CustomGifController* gifctr;
 			RoleResources roleType;
+			RoleCombo* combo;
 			qint32 speed;
 		};
 	}

@@ -112,6 +112,7 @@
     <ClInclude Include="Resources\resources.h" />
     <ClInclude Include="UI\background.h" />
     <ClInclude Include="UI\role.h" />
+    <ClInclude Include="UI\rolecombo.h" />
     <ClInclude Include="UI\scene.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

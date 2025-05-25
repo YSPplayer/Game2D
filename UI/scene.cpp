@@ -4,6 +4,7 @@
 */
 #include "scene.h"
 #include <QMetaMethod>
+#include <thread> 
 namespace Game {
 	namespace UI {
 		Scene::Scene(QWidget* parent):QWidget(parent) {
@@ -16,6 +17,8 @@ namespace Game {
 			player->CreateRole(BaShen);
 			player->SetAction(Default);
 			setFocusPolicy(Qt::StrongFocus);//获取窗口焦点，防止需要通过点击一次窗口才能获取到焦点
+			Util::lastTime = timer.nsecsElapsed() * 1e-9;
+			timer.start();
 		}
 
 		void Scene::SetBackGround(const QPixmap* img) {
@@ -26,7 +29,15 @@ namespace Game {
 		/// 更新游戏帧
 		/// </summary>
 		void Scene::Update() {
-			if (presseds[Util::keysmap[MoveRight]].pressed) {
+			UpdateDeltaTime();//更新游戏帧
+			if (presseds[Util::keysmap[MoveAttack]].pressed) {
+				if (presseds[Util::keysmap[MoveAttack]].pressedCount == player->GetComBoCount()) {
+					presseds[Util::keysmap[MoveAttack]].flag = true;
+				}
+				//普攻
+				player->SetAction(ActionType::Attack);
+			}
+			else if (presseds[Util::keysmap[MoveRight]].pressed) {
 				if (presseds[Util::keysmap[MoveRight]].pressedCount == 2) {
 					if (player->GetForwardKeyAction() == MoveRight) {
 						presseds[Util::keysmap[MoveRight]].flag = true;
@@ -60,6 +71,13 @@ namespace Game {
 			player->Update();
 		}
 
+		void Scene::UpdateDeltaTime() {
+			// 获取当前时间（纳秒），转换为秒
+			double currentFrameTime = timer.nsecsElapsed() * 1e-9;  // 转换纳秒为秒
+			Util::deltaTime = currentFrameTime - Util::lastTime;
+			Util::lastTime = currentFrameTime;
+		}
+
 		void Scene::Resize()
 		{
 		}
@@ -70,17 +88,16 @@ namespace Game {
 				event->ignore();  // 忽略自动重复事件
 				return;
 			}
-
-			presseds[(Qt::Key)event->key()].pressed = true;
-			presseds[(Qt::Key)event->key()].pressedCount += 1;
-			if (presseds[(Qt::Key)event->key()].pressedCount == 1) {
-				if (!presseds[(Qt::Key)event->key()].connectTime) {
-					presseds[(Qt::Key)event->key()].connectTime = true;
+			PressedEvent& pevent = presseds[(Qt::Key)event->key()];
+			pevent.pressed = true;
+			pevent.pressedCount += 1;
+			if (pevent.pressedCount == 1) {
+				if (!pevent.connectTime) {
+					pevent.connectTime = true;
 					doublePressTimer[(Qt::Key)event->key()] = new QTimer(this);
 					//设置300毫秒触发一次
 					doublePressTimer[(Qt::Key)event->key()]->setSingleShot(true);
 					doublePressTimer[(Qt::Key)event->key()]->setInterval(300);
-
 					Qt::Key key = (Qt::Key)event->key();
 					connect(doublePressTimer[(Qt::Key)event->key()], &QTimer::timeout, this, [this, key]() {
 						if(!presseds[key].flag) presseds[key].pressedCount = 0;
@@ -98,13 +115,13 @@ namespace Game {
 				return;
 			}
 			qDebug() << "Release";
-			Qt::Key key = (Qt::Key)event->key();
-			if (presseds[key].flag) {
-				presseds[key].Reset();
+			PressedEvent& pevent = presseds[(Qt::Key)event->key()];
+			if (pevent.flag) {
+				pevent.Reset();
 				//qDebug() << "Reset";
 			}
 			else {
-				presseds[key].pressed = false;
+				pevent.pressed = false;
 			}
 		}
 

@@ -5,6 +5,7 @@
 #include "resources.h"
 #include <QPainter>
 #include <QDir>
+#include <QLabel>
 #include "../define.h"
 #include "gifmanage.h"
 namespace Game {
@@ -14,9 +15,14 @@ namespace Game {
 	};
 	QMap<KeyActionType, Qt::Key> Util::keysmap = {
 		{MoveLeft,Qt::Key_A},{MoveRight,Qt::Key_D}, {MoveDown,Qt::Key_S},
-		{MoveUp,Qt::Key_W}
+		{MoveUp,Qt::Key_W},{MoveAttack,Qt::Key_J}
 	};//映射玩家键盘的行动
+	QMap<ActionType, QString> Util::acitonname = {
+		{Default,"default"},{Forward,"forward"},{Back,"back"},{Run,"run"},{Attack,"attack"}
+	};
 	QList<QPixmap*> Util::bgs;
+	double Util::deltaTime = 0.0;
+	double Util::lastTime = 0.0;
 	/// <summary>
 	/// 加载资源
 	/// </summary>
@@ -44,21 +50,31 @@ namespace Game {
 			QList<QString> filters;
 			filters << "*.gif";
 			QFileInfoList files = dir.entryInfoList(filters, QDir::Files);
-			for(const QFileInfo &file: files) {
-				SharedGifFrameManager*movie = new SharedGifFrameManager(file.absoluteFilePath());
-				if (file.baseName().toLower() == "default") {
-					rolegifs[key][ActionType::Default] = movie;
+			QList<ActionType> atypes = { Default ,Forward,Back,Run,Attack };
+			for (qint32 i = atypes.count() - 1; i >= 0; --i) {
+				ActionType atype = atypes[i];
+				const auto& _files = ListFilter::Where<QFileInfo>(files, [atype](const QFileInfo& info)->bool {
+					return info.baseName().toLower() == acitonname[atype];
+				});
+				if (_files.count() > 0) {
+					SharedGifFrameManager* movie = new SharedGifFrameManager(_files[0].absoluteFilePath());
+					rolegifs[key][atype] = movie;
+					atypes.removeAt(i);
 				}
-				else if (file.baseName().toLower() == "forward") {
-					rolegifs[key][ActionType::Forward] = movie;
-				}
-				else if (file.baseName().toLower() == "back") {
-					rolegifs[key][ActionType::Back] = movie;
-					
-				}
-				else if (file.baseName().toLower() == "run") {
-					rolegifs[key][ActionType::Run] = movie;
-
+			}
+			//剩下的在目录中寻找
+			for (const ActionType atype : atypes) {
+				dir = QDir(rolepath + "/" + dirname + "/" + acitonname[atype]);
+				if (dir.exists()) {
+					QList<QString> filters;
+					filters << "*.png";
+					QFileInfoList files = dir.entryInfoList(filters, QDir::Files);
+					QList<QPixmap> maps;
+					for (auto& info : files) {
+						maps.push_back(QPixmap(info.absolutePath() + "/" + info.fileName()));
+					}
+					SharedGifFrameManager* movie = new SharedGifFrameManager(maps);
+					rolegifs[key][atype] = movie;
 				}
 			}
 		}
@@ -151,6 +167,38 @@ namespace Game {
 	double Util::TruncateToTwoDecimal(double value) {
 		// 先乘以100，取整后再除以100
 		return std::floor(value * 100) / 100;
+	}
+
+	double Util::GetTrueSpeed(double speed) {
+		return speed * deltaTime;
+	}
+
+	QPoint Util::FindFirstNonTransparentPixel(const QLabel* label) {
+		// 获取label在父组件中的位置
+		QPoint labelPos = label->pos();
+		// 获取QLabel上的图片
+		const QPixmap& pixmap = label->pixmap();
+		if (!pixmap) {
+			return labelPos;  // 如果没有图片，返回原点
+		}
+		// 将QPixmap转换为QImage以便访问像素数据
+		const QImage& image = pixmap.toImage();
+		// 遍历图片的每个像素
+		for (qint32 y = 0; y < image.height(); ++y) {
+			for (qint32 x = 0; x < image.width(); ++x) {
+				// 获取当前像素点的颜色
+				QColor color = image.pixelColor(x, y);
+				// 检查alpha通道值是否大于0
+				if (color.alpha() > 0) {
+					// 找到第一个非透明像素
+					// 计算这个点在父组件中的实际位置
+					int actualX = labelPos.x() - x;
+					int actualY = labelPos.y() - y;
+					return QPoint(actualX, actualY);
+				}
+			}
+		}
+		return labelPos;
 	}
 
 }

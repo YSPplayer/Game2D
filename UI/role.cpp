@@ -5,6 +5,7 @@
 #include "role.h"
 #include "../Core/enum.h"
 #include "../define.h"
+#include "rolecombo.h"
 using namespace Game::Core;
 namespace Game {
 	namespace UI {
@@ -16,6 +17,7 @@ namespace Game {
 		bool Role::CreateRole(RoleResources type) {
 			gifctr = new CustomGifController(Util::rolegifs[type][ActionType::Default],
 				this, false,isleft,this);
+			combo = new RoleCombo(this,this);
 			roleType = type;
 			return true;
 		}
@@ -32,10 +34,24 @@ namespace Game {
 			gifctr->SetFrame(Util::rolegifs[roleType][type], isleft);
 		}
 
+		/// <summary>
+		/// 设置当前角色连招
+		/// </summary>
+		/// <param name="index"></param>
+		void Role::SetComBo(int index) {
+			int arrayindex = index - 1;
+			if (arrayindex >= combo->indexs.count() || arrayindex < 0) {
+				qDebug() << "[Role::SetComBo]Warning:combox index is out of range.";
+				return ;
+			}
+			int frame = combo->indexs[arrayindex];
+			gifctr->SetFrame(Util::rolegifs[roleType][ActionType::Attack], isleft);
+		}
+
 		Role::Role(QWidget* parent):QLabel(parent) {
 			gifctr = nullptr;
 			resize(GAME_ROLE_WIDTH, GAME_ROLE_HEIGHT);
-			speed = 5;
+			speed = 100;
 			isleft = false;
 			setScaledContents(true);//图片自动铺满整个label
 		}
@@ -45,24 +61,25 @@ namespace Game {
 		/// </summary>
 		void Role::Move(KeyActionType type) {
 	 		SetAction(Util::KeyActionTypeToActionType(type, isleft));
+			double tspeed = Util::GetTrueSpeed(speed);
 			if (type == KeyActionType::MoveRight) {
-				move(this->x() + speed, this->y());
+				move(this->x() + tspeed, this->y());
 			}
 			else if (type == KeyActionType::MoveRun) 
 			{
 				move(isleft ?
-					this->x() + double(speed) * 1.5 :
-					this->x() - double(speed) * 1.5, this->y());
+					this->x() + double(tspeed) * 1.5 :
+					this->x() - double(tspeed) * 1.5, this->y());
 			
 			}
 			else if (type == KeyActionType::MoveUp) {
-				move(this->x(), this->y() - speed);
+				move(this->x(), this->y() - tspeed);
 			}
 			else if (type == KeyActionType::MoveDown) {
-				move(this->x(), this->y() + speed);
-			}
+				move(this->x(), this->y() + tspeed);
+			} 
 			else if (type == KeyActionType::MoveLeft) {
-				move(this->x() - speed, this->y());
+				move(this->x() - tspeed, this->y());
 			}
 		}
 

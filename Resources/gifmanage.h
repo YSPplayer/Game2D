@@ -29,7 +29,7 @@ namespace Game {
             frameCount = reader.imageCount();
             // 预加载所有帧
             frames.reserve(frameCount);
-            double defaultradio = Util::TruncateToTwoDecimal((double)GAME_ROLE_HEIGHT / (double)GAME_ROLE_WIDTH);
+            //double defaultradio = Util::TruncateToTwoDecimal((double)GAME_ROLE_HEIGHT / (double)GAME_ROLE_WIDTH);
             for (int i = 0; i < frameCount; i++) {
                 reader.jumpToImage(i);
                 frames.append(QPixmap::fromImage(reader.read()));
@@ -38,6 +38,15 @@ namespace Game {
             };
         }
 
+        SharedGifFrameManager(const QList<QPixmap>& maps, QObject* parent = nullptr) : QObject(parent) {
+            frameCount = maps.count();
+            // 预加载所有帧
+            frames.reserve(frameCount);
+            for (int i = 0; i < frameCount; i++) {
+                frames.append(maps[i]);
+                frameDelays.append(1);
+            };
+        }
         // 获取指定索引的帧
         QPixmap GetFrame(int index) const {
             return frames.at(index % frameCount);
@@ -108,10 +117,10 @@ namespace Game {
             const QPixmap& map = frameManager->GetFrame(currentFrame);
             label->resize(map.width() * 1.8,map.height() * 1.8);
             label->setPixmap(isleft ? map : Util::ToMirrorPixmap(map));
-            if (!enabletimer) return;
+            //if (!enabletimer) return;
             // 设置下一帧的延迟
-            int delay = frameManager->GetFrameDelay(currentFrame);
-            timer->setInterval(delay * speedFactor);
+            //int delay = frameManager->GetFrameDelay(currentFrame); delay * 
+            //timer->setInterval(speedFactor);
         }
 
     private:

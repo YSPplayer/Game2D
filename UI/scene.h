@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QKeyEvent>
 #include <QTimer>
+#include <QElapsedTimer>
 #include "background.h"
 #include "role.h"
 namespace Game {
@@ -29,6 +30,8 @@ namespace Game {
 			void SetBackGround(const QPixmap* img);
 			void Update();
 		private:
+			QElapsedTimer timer;
+			void UpdateDeltaTime();
 			QMap<Qt::Key,QTimer*> doublePressTimer;//双次按下触发检测
 			void Resize();
 			QWidget* container;
